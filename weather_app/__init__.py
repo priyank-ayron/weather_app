@@ -10,9 +10,6 @@ app.config['SECRET_KEY'] = 'thisisasecret'
 
 db = SQLAlchemy(app)
 
-i = 0
-cities_covered = []
-
 class City(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -26,40 +23,25 @@ def get_weather_data(city):
 
 @app.route('/')
 def index_get():
-    global i
+    cities = City.query.all()
+
     weather_data = []
-    if i == 0:
-        try:
-            num_rows_deleted = db.session.query(City).delete()
-            db.session.commit()
-            
-            return render_template('weather.html', weather_data=weather_data)
-        except:
-            db.session.rollback()
-    else:
-        cities = City.query.all()
+    for city in cities:
 
-        weather_data = []
-        global cities_covered
-        for city in cities:
+        r = get_weather_data(city.name)
+        weather = {
+            'city': city.name,
+            'temperature': r['main']['temp'],
+            'description': r['weather'][0]['description'],
+            'icon': r['weather'][0]['icon'],
+        }
 
-            r = get_weather_data(city.name)
-            cities_covered.append(city.name.lower())
-            weather = {
-                'city': city.name,
-                'temperature': r['main']['temp'],
-                'description': r['weather'][0]['description'],
-                'icon': r['weather'][0]['icon'],
-            }
+        weather_data.append(weather)
 
-            weather_data.append(weather)
-
-        cities_covered = list(set(cities_covered))
-        return render_template('weather.html', weather_data=weather_data)
+    return render_template('weather.html', weather_data=weather_data)
 
 @app.route('/', methods=['POST'])
 def index_post():
-    global i
     err_msg = ''
     new_city = request.form.get('city').strip()
 
@@ -71,7 +53,6 @@ def index_post():
             new_city_data = get_weather_data(new_city)
             if new_city_data['cod'] == 200:
                 new_city_obj = City(name=new_city)
-                i = i + 1
                 db.session.add(new_city_obj)
                 db.session.commit()
             else:
