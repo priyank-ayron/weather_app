@@ -48,7 +48,7 @@ def index_post():
     if new_city:
         existing_city = City.query.filter_by(name=new_city).first()
 
-        if not existing_city and new_city.lower() not in cities_covered:
+        if not existing_city:
             new_city = new_city.lower().title()
             new_city_data = get_weather_data(new_city)
             if new_city_data['cod'] == 200:
