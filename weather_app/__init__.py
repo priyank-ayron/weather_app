@@ -44,12 +44,11 @@ def index_get():
 def index_post():
     err_msg = ''
     new_city = request.form.get('city').strip()
+    new_city = new_city.lower().title()
 
     if new_city:
         existing_city = City.query.filter_by(name=new_city).first()
-
-        if not existing_city:
-            new_city = new_city.lower().title()
+        if not existing_city:        
             new_city_data = get_weather_data(new_city)
             if new_city_data['cod'] == 200:
                 new_city_obj = City(name=new_city)
